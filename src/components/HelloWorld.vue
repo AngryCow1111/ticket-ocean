@@ -16,15 +16,24 @@
     <li v-for="(seat,index) in seats" :key="seat" :id="id" :index="index">
         {{ seat }}
     </li>
+    {{repositories}}
     <input v-model.lazy="msg1"/>
 </template>
 
 <script>
+    import useUserRepositories from '@/composables/useUserRepositories'
+    import useRepositoryNameSearch from '@/composables/useRepositoryNameSearch'
+    import {toRefs} from 'vue'
+
     export default {
         name: 'hello world',
         props: {
             msg: String,
-            direction: Number
+            direction: Number,
+            user: {
+                type: String,
+                required: false
+            }
         },
         data() {
             return {
@@ -55,7 +64,25 @@
             getAnswer(param) {
                 this.answer = 'Thinking... ' + param
             }
-        }
+        },
+        setup(props) {
+            const {user} = toRefs(props)
+
+            const {repositories, getUserRepositories} = useUserRepositories(user)
+
+            const {
+                searchQuery,
+                repositoriesMatchingSearchQuery
+            } = useRepositoryNameSearch(repositories)
+
+            return {
+                // Since we don’t really care about the unfiltered repositories
+                // we can expose the filtered results under the `repositories` name
+                repositories: repositoriesMatchingSearchQuery,
+                getUserRepositories,
+                searchQuery,
+            }
+        },
 
     }
 </script>

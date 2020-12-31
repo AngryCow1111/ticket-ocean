@@ -1,6 +1,8 @@
 <template>
     <div>
+        <SetupComponent></SetupComponent>
     </div>
+<!--    <HelloWorld user=""></HelloWorld>-->
     <!--    <HelloWorld msg="i just"/>-->
     <!--    <MyComponent direction="left"></MyComponent>-->
     <!--    <HelloWorld2></HelloWorld2>-->
@@ -30,7 +32,8 @@
     //     }
     // }
     import {fetchUserRepositories} from "@/api/respositories/fetchUserRepositories";
-    import {ref} from 'vue'
+    import {ref, onMounted, toRefs, watch, computed} from 'vue'
+    import SetupComponent from "./components/SetupComponent";
 
     const counter = ref(0)
 
@@ -40,16 +43,16 @@
     counter.value++
     console.log(counter.value)
     export default {
+        name: 'App',
+        components: {
+            SetupComponent
+            // MyComponent,
+        },
         props: {
             user: {
                 type: String,
                 required: true
             }
-        },
-        name: 'App',
-        components: {
-            // HelloWorld,
-            // MyComponent,
         },
         data() {
             return {
@@ -58,23 +61,34 @@
             }
         },
         setup(props) {
+            const {user} = toRefs(props)
+            const twiceTheCounter = computed(() => counter.value * 2)
+            console.log(twiceTheCounter.value)
             const repositories = ref([])
             const getUserRepositories = async () => {
-                repositories.value = await fetchUserRepositories(props.user)
+                repositories.value = await fetchUserRepositories(user)
             }
+            onMounted(getUserRepositories) // on `mounted` call `getUserRepositories`
+            watch(user, getUserRepositories)
+            const searchQuery = ref('')
+            const repositoriesMatchingSearchQuery = computed(() => {
+                return repositories.value.filter(
+                    repository => repository.name.includes(searchQuery.value)
+                )
+            })
             return {
                 repositories,
-                getUserRepositories // functions returned behave the same as methods
+                getUserRepositories, // functions returned behave the same as methods
+                searchQuery,
+                repositoriesMatchingSearchQuery
             }
+
         },
         computed: {
             filteredRepositories(user) {
                 return user
 
             }, // 3
-            repositoriesMatchingSearchQuery(user) {
-                return user
-            }, // 2
         },
         watch: {
             user: 'getUserRepositories' // 1
